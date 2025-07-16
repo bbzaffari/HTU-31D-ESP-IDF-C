@@ -120,6 +120,28 @@ bool _htu31d_crc_check(const uint8_t *data, size_t len, uint8_t crc);
 Verifies the CRC of received sensor data using polynomial `0x31` (note: `CRC_POLY_DIVISOR` define is unused).
 **Commands used:** none (pure data check)
 
+
+---
+---
+### Minimal Example: HTU31D Single Reading
+
+In addition to the main libraries (`freertos`, `esp_log`, `driver/i2c_master`) and the `htu31.h` header, this is the minimal code required to perform a single reading from the HTU31D sensor and print the result to the log.
+
+Place the following inside `app_main`:
+
+```c
+htu31_init(0, 21, 22, 100000, &bus, &dev);
+
+float t, rh;
+if (htu31_measure_all_combined(dev, &t, &rh) == ESP_OK)
+    ESP_LOGI("HTU31", "T:%.1fC H:%.1f%%", t, rh);
+```
+
+This initializes the sensor, performs one temperature and humidity measurement, and logs the values to the serial console.
+
+No loop or additional configuration is required for this simple test.
+
+
 ---
 
 ### General Notes
