@@ -2,21 +2,43 @@
 
 #include "htu31.h"
 
+static const char *TAG = "HTU31D";
 
-static const char *TAG = "htu31d";
+#define HTU31D_CONVERSION 0x40      // Start a temperature and humidity measurement
+#define HTU31D_READTEMPHUM 0x00     // Read temperature and humidity results (after conversion)
+#define HTU31D_RESET 0x1E           // Soft reset the sensor
+#define HTU31D_HEATERON 0x04        // Enable internal heater (reduces condensation)
+#define HTU31D_HEATEROFF 0x02       // Disable internal heater
 
-#define HTU31D_CONVERSION     0x40
-#define HTU31D_READTEMPHUM    0x00
-#define HTU31D_RESET          0x1E
-#define HTU31D_HEATERON       0x04
-#define HTU31D_HEATEROFF      0x02
+#define CMD_MEAS_RH_HOLD 0xE5       // Measure humidity, hold master during transmission
+#define CMD_MEAS_T_HOLD 0xE3        // Measure temperature, hold master during transmission
+#define CMD_MEAS_RH_NOHOLD 0xF5     // Measure humidity, no hold (allows other tasks)
+#define CMD_MEAS_T_NOHOLD 0xF3      // Measure temperature, no hold
+#define CMD_READ_T 0xE0             // Read last temperature value
+#define CMD_RESET 0xFE              // Soft reset (alternate, legacy)
+#define CMD_READ_USER_REG 0xE7      // Read user configuration register
+#define CMD_WRITE_USER_REG 0xE6     // Write user configuration register
+#define CMD_WRITE_HEATER_REG 0x51   // Write to heater control register
+#define CMD_READ_HEATER_REG 0x11    // Read heater control register
+#define CMD_READ_ID_1 0x0FFA        // Read unique ID part 1
+#define CMD_READ_ID_2 0xC9FC        // Read unique ID part 2
+#define CMD_READ_FW_REV_1 0xB884    // Read firmware revision
 
-#define DELAY_MS              20
-#define I2C_TIMEOUT_MS        1000
-#define CRC_POLY_DIVISOR      0x988000
+#define BIT_USER_REG_RES0 0         // User register: resolution bit 0
+#define BIT_USER_REG_HTRE 2         // User register: heater enable bit
+#define BIT_USER_REG_RES1 7         // User register: resolution bit 1
+
+#define HEATER_MASK 0x0F            // Mask for heater control (lower 4 bits)
+#define BV(x) (1 << (x))            // Utility macro: bit value
+
+#define DELAY_MS 20                 // Delay between commands (milliseconds)
+#define I2C_TIMEOUT_MS 1000         // I2C communication timeout (milliseconds)
+#define I2C_FREQ_HZ 400000          // I2C bus frequency (Hertz)
+
+#define CRC_POLY_DIVISOR 0x988000   // CRC polynomial divisor (unused; legacy define)
 
 //---------------------------------------------------------------
-// Função interna para verificar o CRC dos dados
+/// Internal function to calculate the CRC-8 checksum over data bytes (polynomial 0x31)
 static uint8_t htu31d_crc8(const uint8_t *data, size_t len) {
     uint8_t crc = 0x00;
     for (size_t i = 0; i < len; i++) {
@@ -28,12 +50,14 @@ static uint8_t htu31d_crc8(const uint8_t *data, size_t len) {
     return crc;
 }
 
+//---------------------------------------------------------------
+/// Checks if the received CRC matches the calculated CRC for the given data buffer
 bool _htu31d_crc_check(const uint8_t *data, size_t len, uint8_t crc) {
     return htu31d_crc8(data, len) == crc;
 }
 
 //---------------------------------------------------------------
-// Reset do sensor (comando 0x1E)
+/// Sends the soft reset command (0x1E) to the sensor and waits briefly for recovery
 esp_err_t htu31_reset(i2c_master_dev_handle_t dev) {
     uint8_t cmd = HTU31D_RESET;
     esp_err_t err = i2c_master_transmit(dev, &cmd, 1, I2C_TIMEOUT_MS);
@@ -45,7 +69,7 @@ esp_err_t htu31_reset(i2c_master_dev_handle_t dev) {
 }
 
 //---------------------------------------------------------------
-// Leitura de temperatura e umidade combinadas (6 bytes + CRC)
+// Performs combined temperature and humidity measurement with CRC validation and raw-to-physical conversion
 esp_err_t htu31_measure_all_combined(i2c_master_dev_handle_t dev, float *temperature, float *humidity) {
     uint8_t conv_cmd = HTU31D_CONVERSION;
     esp_err_t err = i2c_master_transmit(dev, &conv_cmd, 1, I2C_TIMEOUT_MS);
@@ -57,7 +81,10 @@ esp_err_t htu31_measure_all_combined(i2c_master_dev_handle_t dev, float *tempera
 
     err = i2c_master_transmit(dev, &cmd, 1, I2C_TIMEOUT_MS);
     if (err != ESP_OK) return err;
-    vTaskDelay(pdMS_TO_TICKS(1)); // pequena espera de resposta
+    vTaskDelay(pdMS_TO_TICKS(1)); // pequena espera de resposta 
+    // vTaskDelay(pdMS_TO_TICKS(10)); // pequena espera de resposta
+    // vTaskDelay(pdMS_TO_TICKS(15)); // pequena espera de resposta
+
     // Impressão dos dados crus
     // ESP_LOGI(TAG, "Bytes crus recebidos:");
     // ESP_LOGI(TAG, "Temp: %02X %02X [CRC: %02X]", buf[0], buf[1], buf[2]);
@@ -80,20 +107,21 @@ esp_err_t htu31_measure_all_combined(i2c_master_dev_handle_t dev, float *tempera
 }
 
 //---------------------------------------------------------------
-// Wrapper: apenas temperatura
+// Wrapper: runs combined measurement but returns only the temperature value
 esp_err_t htu31_measure_temperature(i2c_master_dev_handle_t dev, float *temperature) {
     float dummy_humidity;
     return htu31_measure_all_combined(dev, temperature, &dummy_humidity);
 }
 
 //---------------------------------------------------------------
-// Wrapper: apenas umidade
+// Wrapper: runs combined measurement but returns only the humidity value
 esp_err_t htu31_measure_humidity(i2c_master_dev_handle_t dev, float *humidity) {
     float dummy_temp;
     return htu31_measure_all_combined(dev, &dummy_temp, humidity);
 }
 
-
+//---------------------------------------------------------------
+// Initializes the I2C bus and registers the HTU31D device, performing an initial probe and reset
 esp_err_t htu31_init(uint8_t i2c_port,
                      gpio_num_t sda,
                      gpio_num_t scl,

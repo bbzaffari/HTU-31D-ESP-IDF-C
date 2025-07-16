@@ -7,58 +7,34 @@
 #include <driver/i2c_master.h>
 #include <esp_timer.h>
 #include <esp_err.h>
-#include "esp_rom_sys.h"  // para esp_rom_delay_us
-
+#include "esp_rom_sys.h" 
 
 #define HTU31_ADDR            0x40
-#define I2C_TIMEOUT_MS        1000
-#define I2C_FREQ_HZ           400000
-#define DELAY_MS              20
 
-#define CMD_MEAS_RH_HOLD      0xE5
-#define CMD_MEAS_T_HOLD       0xE3
-#define CMD_MEAS_RH_NOHOLD    0xF5
-#define CMD_MEAS_T_NOHOLD     0xF3
-#define CMD_READ_T            0xE0
-#define CMD_RESET             0xFE
-#define CMD_READ_USER_REG     0xE7
-#define CMD_WRITE_USER_REG    0xE6
-#define CMD_WRITE_HEATER_REG  0x51
-#define CMD_READ_HEATER_REG   0x11
-#define CMD_READ_ID_1         0x0FFA
-#define CMD_READ_ID_2         0xC9FC
-#define CMD_READ_FW_REV_1     0xB884
-
-#define BIT_USER_REG_RES0     0
-#define BIT_USER_REG_HTRE     2
-#define BIT_USER_REG_RES1     7
-
-#define HEATER_MASK           0x0F
-#define BV(x) (1 << (x))
-
-/** Resoluções possíveis */
+/** Possible resolutions */
 typedef enum {
-    HTU31_RES_RH12_TEMP14 = 0,
-    HTU31_RES_RH8_TEMP12  = 1,
-    HTU31_RES_RH10_TEMP13 = 2,
-    HTU31_RES_RH11_TEMP11 = 3
+    HTU31_RES_RH12_TEMP14 = 0,   // Humidity 12-bit, Temperature 14-bit
+    HTU31_RES_RH8_TEMP12  = 1,   // Humidity 8-bit, Temperature 12-bit
+    HTU31_RES_RH10_TEMP13 = 2,   // Humidity 10-bit, Temperature 13-bit
+    HTU31_RES_RH11_TEMP11 = 3    // Humidity 11-bit, Temperature 11-bit
 } htu31_resolution_t;
 
-/** Calcula e verifica o CRC (retorna ESP_OK ou ESP_ERR_INVALID_CRC) */
+/** Computes and checks CRC (returns ESP_OK or ESP_ERR_INVALID_CRC) */
 esp_err_t htu31_crc_check(const uint8_t *data, size_t len, uint8_t crc);
 
-/** Faz leitura completa de temperatura e umidade via comando combinado */
+/** Reads combined temperature and humidity using combined command */
 esp_err_t htu31_measure_all_combined(i2c_master_dev_handle_t dev, float *t, float *rh);
 
-/** Mede apenas temperatura (modo NO HOLD) */
+/** Measures only temperature (NO HOLD mode) */
 esp_err_t htu31_measure_temperature(i2c_master_dev_handle_t dev, float *t);
 
-/** Mede apenas umidade (modo NO HOLD) */
+/** Measures only humidity (NO HOLD mode) */
 esp_err_t htu31_measure_humidity(i2c_master_dev_handle_t dev, float *rh);
 
-/** Executa um reset de software */
+/** Executes a software reset */
 esp_err_t htu31_reset(i2c_master_dev_handle_t dev);
 
+/** Initializes I2C bus and HTU31 device */
 esp_err_t htu31_init(uint8_t i2c_port,
                      gpio_num_t sda,
                      gpio_num_t scl,
