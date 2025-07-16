@@ -1,4 +1,4 @@
-# HTU31D
+# HTU31D-ESP-IDF
 **This code is shared publicly with no copyrights; anyone is free to use, modify, or redistribute it.**
 
 This driver was developed entirely by me, Bruno Bavaresco Zaffari, as part of my undergraduate final thesis project in Computer Engineering. 
