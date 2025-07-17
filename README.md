@@ -19,7 +19,7 @@ It combines a polymer-based capacitive sensing element for relative humidity wit
 
 ### Documentation
 
-For detailed electrical characteristics, communication protocols, and performance specifications, refer to the official HTU31D datasheet:  
+For detailed electrical characteristics, communication protocols, and performance specifications, refer to the official  
 [HTU31D Datasheet](https://www.te.com/en/product-CAT-HSC0007.html) 
 
 ### Disclaimer on Commands and Usage
