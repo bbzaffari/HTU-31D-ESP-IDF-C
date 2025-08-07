@@ -1,14 +1,15 @@
 # HTU31D-ESP-IDF
+
 **This code is shared publicly with no copyrights; anyone is free to use, modify, or redistribute it.**
 
 This driver was developed entirely by me, Bruno Bavaresco Zaffari, as part of my undergraduate final thesis project in Computer Engineering. 
 
-### Introduction
+## Introduction
 
 The HTU31D is a capacitive digital humidity and temperature sensor manufactured by TE Connectivity.  
 It combines a polymer-based capacitive sensing element for relative humidity with a bandgap temperature sensor, providing long-term stability, high precision, and low power consumption — ideal for environmental monitoring, HVAC systems, weather stations, and IoT devices.
 
-### Operational Ranges and Specifications
+## Operational Ranges and Specifications
 
 - **Temperature range:** -40°C to +125°C  
 - **Humidity range:** 0% to 100% RH  
@@ -17,12 +18,12 @@ It combines a polymer-based capacitive sensing element for relative humidity wit
 - **Interface:** I²C digital interface  
 - **Features:** Integrated heater, configurable resolution, user-accessible registers
 
-### Documentation
+## Documentation
 
 For detailed electrical characteristics, communication protocols, and performance specifications, refer to the official  
 [HTU31D Datasheet](https://www.te.com/en/product-CAT-HSC0007.html) 
 
-### Disclaimer on Commands and Usage
+## Commands and Usage
 
 This driver uses a subset of the available HTU31D sensor commands, focusing on essential functions for temperature and humidity measurements.
 
@@ -50,7 +51,7 @@ These are the core commands required for basic sensor operation and environmenta
 
 These commands are defined for potential future expansion, such as advanced device configuration, heater control, or device diagnostics. They are included to make the driver easier to extend and to document the full range of HTU31D capabilities.
 
-### HTU31D Driver Functions
+## HTU31D Driver Functions
 
 **htu31\_init**
 
@@ -123,7 +124,7 @@ Verifies the CRC of received sensor data using polynomial `0x31` (note: `CRC_POL
 
 ---
 ---
-### Minimal Example: HTU31D Single Reading
+## Minimal Example: HTU31D Single Reading
 
 In addition to the main libraries (`freertos`, `esp_log`, `driver/i2c_master`) and the `htu31.h` header, this is the minimal code required to perform a single reading from the HTU31D sensor and print the result to the log.
 
@@ -144,7 +145,7 @@ No loop or additional configuration is required for this simple test.
 
 ---
 
-### General Notes
+## General Notes
 
 * Heater functions (`HTU31D_HEATERON`, `HTU31D_HEATEROFF`) are defined but not yet implemented in functions.
 * Other commands (`CMD_MEAS_*`, `CMD_RESET`, `CMD_READ_ID_*`) are defined but not currently used.
