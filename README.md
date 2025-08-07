@@ -126,7 +126,7 @@ Verifies the CRC of received sensor data using polynomial `0x31` (note: `CRC_POL
 
 ---
 ---
-## Minimal Example: HTU31D Single Reading
+## Example: HTU31D Single Reading
 
 In addition to the main libraries (`freertos`, `esp_log`, `driver/i2c_master`) and the `htu31.h` header, this is the minimal code required to perform a single reading from the HTU31D sensor and print the result to the log.
 
