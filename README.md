@@ -27,7 +27,7 @@ For detailed electrical characteristics, communication protocols, and performanc
 
 This driver uses a subset of the available HTU31D sensor commands, focusing on essential functions for temperature and humidity measurements.
 
-#### Commands actively used in this implementation
+#### Core commands used in this implementation
 
 - `HTU31D_CONVERSION (0x40)` — Starts a temperature and humidity measurement.
 - `HTU31D_READTEMPHUM (0x00)` — Reads the combined temperature and humidity data.
@@ -35,7 +35,7 @@ This driver uses a subset of the available HTU31D sensor commands, focusing on e
 
 These are the core commands required for basic sensor operation and environmental monitoring.
 
-#### Commands defined but not yet used
+#### Other Commands 
 
 - `HTU31D_HEATERON (0x04)` / `HTU31D_HEATEROFF (0x02)` — Enable/disable the internal heater to reduce condensation.
 - `CMD_MEAS_RH_HOLD (0xE5)` / `CMD_MEAS_T_HOLD (0xE3)` — Perform humidity or temperature measurements with I2C hold.
@@ -50,6 +50,8 @@ These are the core commands required for basic sensor operation and environmenta
 - `HEATER_MASK`, `BV(x)` — Utilities for bit-level operations.
 
 These commands are defined for potential future expansion, such as advanced device configuration, heater control, or device diagnostics. They are included to make the driver easier to extend and to document the full range of HTU31D capabilities.
+
+
 
 ## HTU31D Driver Functions
 
